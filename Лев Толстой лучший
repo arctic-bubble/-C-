@@ -1,0 +1,70 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        string url = "http://az.lib.ru/t/tolstoj_lew_nikolaewich/text_0200.shtml"; // ссылка на текстовый файл
+        string content = GetTextFile(url); // получаем содержимое файла по ссылке
+
+        List<string> words = GetUniqueWords(content); // получаем список уникальных слов
+
+        Dictionary<string, int> wordCounts = CountWords(content, words); // считаем количество употреблений каждого слова
+
+        List<KeyValuePair<string, int>> sortedWords = SortWords(wordCounts); // сортируем слова по количеству употреблений
+
+        string outputFileName = "output.txt";
+        WriteOutputToFile(sortedWords, outputFileName); // записываем результат в выходной файл
+
+        Console.WriteLine(" Результаты сохранены в файле " + outputFileName);
+    }
+
+    static string GetTextFile(string url)
+    {
+        using (var webClient = new System.Net.WebClient())
+        {
+            return webClient.DownloadString(url);
+        }
+    }
+
+    static List<string> GetUniqueWords(string content)
+    {
+        return content.ToLower().Split(new char[] { ' ', '\n', '\r', '\t', '.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '<', '>', '\"', '\'', '\\', '/', '\u2014', '\u2013', '\u2026' }, StringSplitOptions.RemoveEmptyEntries)
+            .Distinct()
+            .ToList();
+    }
+
+    static Dictionary<string, int> CountWords(string content, List<string> words)
+    {
+        Dictionary<string, int> wordCounts = new Dictionary<string, int>();
+
+        foreach (string word in words)
+        {
+            int count = content.ToLower().Split(new char[] { ' ', '\n', '\r', '\t', '.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '<', '>', '\"', '\'', '\\', '/', '\u2014', '\u2013', '\u2026' }, StringSplitOptions.RemoveEmptyEntries)
+                .Count(w => w == word);
+
+            wordCounts.Add(word, count);
+        }
+
+        return wordCounts;
+    }
+
+    static List<KeyValuePair<string, int>> SortWords(Dictionary<string, int> wordCounts)
+    {
+        return wordCounts.OrderByDescending(x => x.Value).ToList();
+    }
+
+    static void WriteOutputToFile(List<KeyValuePair<string, int>> sortedWords, string outputFileName)
+    {
+        using (StreamWriter file = new StreamWriter(outputFileName))
+        {
+            foreach (KeyValuePair<string, int> pair in sortedWords)
+            {
+                file.WriteLine("{0} - {1}", pair.Key, pair.Value);
+            }
+        }
+    }
+}
